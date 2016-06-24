@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Threejs SQLStream WebGl</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+	<style>
+		
+		html, body {
+			font-family: Helvetica, Arial, sans-serif;
+			font-weight: 100;
+			width: 100vw;
+			height: 100vh;
+			overflow: hidden;
+			padding: 0;
+			margin: 0;
+			position: relative;
+		}
+
+		.label {
+			font-size: 1em;
+			padding: 16px 32px;
+			color: #FFFFFF;
+			background: #000000;
+			/*-webkit-filter: blur(0);*/
+		}
+
+		#webgl-container {
+			z-index: 0;
+		}
+
+	</style>
+
+</head>
+<body>
+
+<div id="webgl-container"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
+<script src="./vendor/three.min.js"></script>
+<script src="./vendor/tweenlite.min.js"></script>
+<script src="./vendor/perlin.js"></script>
+<script src="./webgl-sqlstream.js"></script>
+<script>
+
+	var webgl = new WebGL();
+
+	// Methods
+	// .animateTorusPosition()
+	// .setTorusPosition()
+	// .hideLandscape()
+	// .showLandscape()
+
+	webgl.config({
+		width: window.innerWidth, // render container width
+		height: window.innerHeight, // render container height
+		container: "#webgl-container", // parent container
+		torus: {
+			color: "#AAAAAA", // base color
+			color1: "#00cea0", // secondary color
+			color2: "#fd8925", // tertiary color
+			height: 0.04,
+			frequency: 100,
+			amplifier: 2,
+			radius: 0.8,
+			thickness: 0.13,
+			radialSegments: 96,
+			tubularSegments: 96
+		},
+		landscape: {
+			dotsAmount: 240, // Number of dots on the grid
+			animate: false
+		},
+		renderer: {
+			alpha: true, // false is a black background
+			antialias: true // false might save performance on mobile devices
+		}
+	});
+
+	// Set x,y,z coordianates of torus Object
+	webgl.setTorusPosition(0, 0, -2.4); // x, y, z
+
+	// Animate Torus Later
+	// window.addEventListener("click", function(){
+	// 	webgl.animateTorusPosition(3,0,-2.4, 4) // x, y, z, duration
+	// 	webgl.hideLandscape(0.5); // duration
+	// }, false)
+	
+
+</script>
+	
+</body>
+</html>
