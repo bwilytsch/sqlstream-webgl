@@ -201,9 +201,21 @@ function WebGL (){
 
 		var geometry = new THREE.TorusBufferGeometry( that.torus.radius, that.torus.thickness, that.torus.radialSegments, that.torus.tubularSegments );
 
+		var position = geometry.attributes.position;
+		for ( var i = 0, lenT = position.count; i < lenT; i++){
+			position.array[i*3+1] += Math.random() * 0.02;
+		}
+		position.needsUpdate = true;
+
+		var position = geometry.attributes.position;
+
+		for ( var i = 0, lenT = position.array; i < lenT; i++){
+			position.array[i] += Math.random();
+		}
+
 		that.torus.model = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({ color: that.torus.color, wireframe: true, transparent: true, opacity: 0.4 }) );
 
-		var torusSolid =new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.8 }) );
+		var torusSolid =new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({ color: 0xFFFFFF }) );
 
 		var torus2 = new THREE.Mesh( geometry,
 			new THREE.MeshBasicMaterial({ color: new THREE.Color(that.torus.color1), wireframe: true, transparent: true, opacity: 0.16 })
@@ -237,19 +249,28 @@ function WebGL (){
 		console.log("landscape created");
 
 		var height = 0.06,
-			amount = 96;
+			amount = 64;
 
 		var geometry = new THREE.PlaneBufferGeometry(6,2, amount, amount);
 
+		var position = geometry.attributes.position;
+		for ( var i = 0, lenT = position.count; i < lenT; i++){
+			position.array[i*3+2] += Math.random() * 0.02;
+		}
+		position.needsUpdate = true;
+
 		that.landscape.model = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({ color: that.torus.color, wireframe: true, transparent: true, opacity: 0.8 }));
-		var landscapeSolid = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide,  transparent: true, opacity: 0.8 }));
+
+
+		var landscapeSolid = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide }));
 
 		var landscape2 = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({ color: new THREE.Color(that.torus.color1), wireframe: true, transparent: true, opacity: 0.06 }));
 		var landscape3 = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({ color: new THREE.Color(that.torus.color2), wireframe: true, transparent: true, opacity: 0.06 }));
 
-		that.landscape.model.add( landscapeSolid );
 		that.landscape.model.add( landscape2 );
 		that.landscape.model.add( landscape3 );
+		that.landscape.model.add( landscapeSolid );
+
 
 		landscape2.rotation.x = Math.PI;
 		landscape3.rotation.z = Math.PI;
