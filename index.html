@@ -37,11 +37,15 @@
 
 <div id="webgl-container"></div>
 
+<!-- Testing -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
+
+<!-- Dependecies -->
 <script src="./vendor/three.min.js"></script>
 <script src="./vendor/tweenlite.min.js"></script>
 <script src="./vendor/perlin.js"></script>
-<script src="./webgl-sqlstream.js"></script>
+<script src="./webgl-sqlstream.min.js"></script>
+
 <script>
 
 	var webgl = new WebGL();
@@ -49,8 +53,10 @@
 	// Methods
 	// .animateTorusPosition()
 	// .setTorusPosition()
-	// .hideLandscape()
-	// .showLandscape()
+	// .createTorus()
+	// .createLandscape()
+	// .removeTorus()
+	// .removeLandscape()
 
 	webgl.config({
 		width: window.innerWidth, // render container width
@@ -61,16 +67,16 @@
 			color1: "#00cea0", // secondary color
 			color2: "#fd8925", // tertiary color
 			height: 0.04,
-			frequency: 100,
-			amplifier: 2,
+			frequency: 100, // A higher the number results in a slower animation
+			amplifier: 2, // A higer the number results in more "waves"
 			radius: 0.8,
 			thickness: 0.13,
-			radialSegments: 96,
-			tubularSegments: 96
+			radialSegments: 64,
+			tubularSegments: 64,
+			animate: false // activate/deactivate animation
 		},
 		landscape: {
-			dotsAmount: 240, // Number of dots on the grid
-			animate: false
+			animate: true // activate/deactivate animation
 		},
 		renderer: {
 			alpha: true, // false is a black background
@@ -78,14 +84,18 @@
 		}
 	});
 
-	// Set x,y,z coordianates of torus Object
-	webgl.setTorusPosition(0, 0, -2.4); // x, y, z
+	var torusCreated = false;
 
 	// Animate Torus Later
-	// window.addEventListener("click", function(){
-	// 	webgl.animateTorusPosition(3,0,-2.4, 4) // x, y, z, duration
-	// 	webgl.hideLandscape(0.5); // duration
-	// }, false)
+	window.addEventListener("click", function(){
+		if ( !torusCreated ){
+			torusCreated = true;
+			webgl.removeLandscape();
+			webgl.createTorus();
+			webgl.landscape.animate = false;
+			webgl.torus.animate = true;
+		}
+	}, false)
 	
 
 </script>

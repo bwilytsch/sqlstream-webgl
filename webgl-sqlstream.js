@@ -91,6 +91,9 @@ function WebGL (){
 		that.landscape.dotsAmount = options.landscape.dotsAmount;
 		that.landscape.animate = options.landscape.animate;
 
+
+
+		// Remove this when in production
 		stats = new Stats();
 		stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
 		stats.domElement.style.position = "absolute";
@@ -126,7 +129,6 @@ function WebGL (){
 	var counter = 0;
 	noise.seed(Math.random());
 
-
 	// Animate objects
 	this.setTorusPosition = function(x,y,z){
 		that.torus.model.position.set( x, y, z);
@@ -134,170 +136,140 @@ function WebGL (){
 
 	this.animateTorusPosition = function(x,y,z, duration){
 		TweenLite.to(that.torus.model.position, duration, { x: x, y: y, z: z });
-	}
+	};
 
 	this.updateTorus = function(){
+
 		var speedT = counter/that.torus.frequency;
-		var vT, fT, value, altitudeX, altitudeY, altitudeZ;
+		var vertex, vertex2, vertex3, value, altitudeX, altitudeY, altitudeZ;
 
-		for ( var i = 0, lenT = that.torus.initVertices.length; i < lenT; i++ ){
-			vT = that.torus.model.children[0].geometry.vertices[i];
-			fT = that.torus.initVertices[i];
+		if ( that.torus.model.geometry === undefined ){
+			return;
+		}
 
-			value = noise.simplex3( fT.x * that.torus.amplifier, fT.y * that.torus.amplifier, speedT );
+		var initArray = that.torus.initVertices,
+			position = that.torus.model.geometry.attributes.position || [];
 
-			altitudeX = that.Utils.checkValue(fT.x, value);
-			altitudeY = that.Utils.checkValue(fT.y, value);
-			altitudeZ = that.Utils.checkValue(fT.z, value);
+		for ( var i = 0, lenT = position.count; i < lenT; i++){
+			vertex = initArray[i*3];
+			vertex2 = initArray[i*3+1];
+			vertex3 = initArray[i*3+2];
 
-			vT.x = that.Utils.calcSin(fT.x, altitudeX);
-			vT.y = that.Utils.calcSin(fT.y, altitudeY);
-			vT.z = that.Utils.calcSin(fT.z, altitudeZ);
+			value = noise.simplex3( vertex * that.torus.amplifier, vertex2 * that.torus.amplifier, speedT );
+
+			altitudeX = that.Utils.calcSin(vertex, that.Utils.checkValue(vertex, value));
+			altitudeY = that.Utils.calcSin(vertex2, that.Utils.checkValue(vertex2, value));
+			altitudeZ = that.Utils.calcSin(vertex3, that.Utils.checkValue(vertex3, value));
+
+			position.array[i*3] = altitudeX;
+			position.array[i*3+1] = altitudeY;
+			position.array[i*3+2] = altitudeZ;
 
 		};
 
-		that.torus.model.children[0].geometry.verticesNeedUpdate = true;
+		position.needsUpdate = true;
+		
 	};
 
-	this.updateLandscapeDots = function(){
-		for ( var i = 0; i < 120; i++ ){
-			var index = Math.floor( Math.random() * (that.landscape.model.children.length - 2)) + 2;
-			var c = dotsArray[index];
-			c.animate();
+	that.updateLandscape = function(){
+
+		var speedL = counter/that.torus.frequency*0.6;
+		var vertex, vertex2, vertex3, value;
+
+		if ( that.landscape.model.geometry === undefined ){
+			return;
 		}
-	};
 
-	this.updateLandscape = function(){
-		var speedL = counter/200;
-		for ( var i = 0, lenL = that.landscape.initVertices.length; i < lenL; i++ ){
-			var vL = that.landscape.model.children[0].geometry.vertices[i],
-				fL = that.landscape.initVertices[i];
+		var initArray = that.landscape.initVertices,
+			position = that.landscape.model.geometry.attributes.position;
 
-			var valueL = noise.perlin3( fL.x, fL.y, speedL );
-			vL.z = fL.z + valueL;
+		for ( var i = 0, lenL = position.count; i < lenL; i++ ){
+			vertex = initArray[i*3];
+			vertex2 = initArray[i*3+1];
+			
+			value = noise.perlin3( vertex, vertex2, speedL ) * 0.8;
+			position.array[i*3+2] = initArray[i*3+2] + value;
 
 		}
-		that.landscape.model.children[0].geometry.verticesNeedUpdate = true;
+		position.needsUpdate = true;
 	}
 
-	this.showLandscape = function(duration){
-		duration = duration || 0.3;
-
-		var m = that.landscape.model.children[0].material,
-			m1 = that.landscape.model.children[1].material;
-
-		var oldPos = that.landscape.model.position.y;
-		TweenLite.to(that.landscape.model.position, duration, {y:  (oldPos + 0.2)});
-
-		TweenLite.to(m, duration, {opacity: 0.4});
-		TweenLite.to(m1, duration, {opacity: 0.4});
-
-		for (var i = 2, len = that.landscape.model.children.length; i < len; i++){
-			TweenLite.to(that.landscape.model.children[i].material, duration, {opacity: 1});
-		};
-	};
-
-	this.hideLandscape = function(duration){
-		duration = duration || 0.3;
-		var oldPos = that.landscape.model.position.y;
-		TweenLite.to(that.landscape.model.position, duration, {y:  (oldPos - 0.2)});
-		for (var i = 0, len = that.landscape.model.children.length; i < len; i++){
-			TweenLite.to(that.landscape.model.children[i].material, duration, {opacity: 0});
-		};
-	};
-
-	function init(){
+	this.createTorus = function(){
 
 		// Create Torus
 		console.log("torus created");
 
-		var geometry = new THREE.TorusGeometry( that.torus.radius, that.torus.thickness, that.torus.radialSegments, that.torus.tubularSegments );
+		var geometry = new THREE.TorusBufferGeometry( that.torus.radius, that.torus.thickness, that.torus.radialSegments, that.torus.tubularSegments );
 
-		that.torus.model = new THREE.SceneUtils.createMultiMaterialObject( geometry,[
-			new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide, transparent: true, opacity: 0.8 }),
-			new THREE.MeshBasicMaterial({ color: that.torus.color, wireframe: true, transparent: true, opacity: 0.4 })
-		]);
+		that.torus.model = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({ color: that.torus.color, wireframe: true, transparent: true, opacity: 0.4 }) );
 
-		var torus2 = new THREE.SceneUtils.createMultiMaterialObject( geometry,[
-			new THREE.MeshBasicMaterial({ color: new THREE.Color(that.torus.color1), wireframe: true, transparent: true, opacity: 0.06 })
-		]);
+		var torusSolid =new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.8 }) );
 
-		var torus3 = new THREE.SceneUtils.createMultiMaterialObject( geometry,[
-			new THREE.MeshBasicMaterial({ color: new THREE.Color(that.torus.color2), wireframe: true, transparent: true, opacity: 0.06 })
-		]);
+		var torus2 = new THREE.Mesh( geometry,
+			new THREE.MeshBasicMaterial({ color: new THREE.Color(that.torus.color1), wireframe: true, transparent: true, opacity: 0.16 })
+		);
+
+		var torus3 = new THREE.Mesh( geometry,
+			new THREE.MeshBasicMaterial({ color: new THREE.Color(that.torus.color2), wireframe: true, transparent: true, opacity: 0.16 })
+		);
 
 		that.torus.model.position.z = that.torus.distance;
+		that.torus.model.add( torusSolid );
 		that.torus.model.add( torus2 );
 		that.torus.model.add( torus3 );
 
 		torus2.rotation.x = Math.PI;
 		torus3.rotation.y = Math.PI;
 
-		var g;
-		for ( var i = 0; i < that.torus.model.children[0].geometry.vertices.length; i++ ){
-			g = that.torus.model.children[0].geometry.vertices[i];
-			that.torus.initVertices[i] = g.clone();
-			that.torus.initVertices[i].random = Math.random() * 0.6;
-		}
+		that.torus.initVertices = new Float32Array(that.torus.model.geometry.attributes.position.array);
 
 		that._SCENE.add( that.torus.model );
 
+	};
 
-		// Create Landscape & Dots
-		function Dot(mesh, pos){
-			this.mesh = mesh;
-			this.mesh.position.copy(pos);
-			dotsArray.push(this);
-		};
+	this.removeTorus = function(){
+		that._SCENE.remove( that.torus.model );
+	}
 
-		Dot.prototype.animate = function(){
-			TweenLite.to(this.mesh.material, 0.3, { opacity: 0, onComplete: function(){
-				TweenLite.to(this.mesh.material, 0.3, {opacity: 1, delay: 1});
-			}, onCompleteScope: this});
-		};
+	this.createLandscape = function(){
+
+		// Create Torus
+		console.log("landscape created");
 
 		var height = 0.06,
-			amount = 128;
+			amount = 96;
 
-		var geometry = new THREE.PlaneGeometry(6,3, amount, amount);
+		var geometry = new THREE.PlaneBufferGeometry(6,2, amount, amount);
 
-		that.landscape.model = new THREE.SceneUtils.createMultiMaterialObject( geometry,[
-			new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide, transparent: true, opacity: 0.8 }),
-			new THREE.MeshBasicMaterial({ color: 0xAAAAAA, wireframe: true, transparent: true, opacity: 0.4 })
-		]);
+		that.landscape.model = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({ color: that.torus.color, wireframe: true, transparent: true, opacity: 0.8 }));
+		var landscapeSolid = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide,  transparent: true, opacity: 0.8 }));
 
-		var g;
-		for ( var i = 0, len = geometry.vertices.length; i < len; i++ ){
-			g = that.landscape.model.children[0].geometry.vertices[i];
-			g.z = Math.random() * 0.03;
-			that.landscape.initVertices[i] = g.clone();
-		}
+		var landscape2 = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({ color: new THREE.Color(that.torus.color1), wireframe: true, transparent: true, opacity: 0.06 }));
+		var landscape3 = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({ color: new THREE.Color(that.torus.color2), wireframe: true, transparent: true, opacity: 0.06 }));
 
-		// // Get Colored dots cordinates
-		// var sphereGeometry = new THREE.SphereBufferGeometry(0.0014, 4, 4);
-		// var material, material2, index, pos, currentMaterial, mesh, dot;
+		that.landscape.model.add( landscapeSolid );
+		that.landscape.model.add( landscape2 );
+		that.landscape.model.add( landscape3 );
 
-		// for ( var i = 0, len = that.landscape.dotsAmount; i < len; i++ ){		
-		// 	material = new THREE.MeshBasicMaterial({ color: new THREE.Color(that.torus.color1), transparent: true });
-		// 	material2 = new THREE.MeshBasicMaterial({ color: new THREE.Color(that.torus.color2), transparent: true });
-
-		// 	index = Math.floor( Math.random() * that.landscape.initVertices.length),
-		// 		pos = that.landscape.model.children[0].geometry.vertices[index];
-
-		// 	currentMaterial = ( i <= that.landscape.dotsAmount/2 ? material : material2 );
-
-		// 	mesh = new THREE.Mesh( sphereGeometry, currentMaterial );
-		// 	dot = new Dot(mesh, pos);
-
-		// 	that.landscape.model.add( dot.mesh );
-		// };
+		landscape2.rotation.x = Math.PI;
+		landscape3.rotation.z = Math.PI;
 
 		that.landscape.model.position.z = -1.6;
 		that.landscape.model.position.y = -0.8;
 		that.landscape.model.rotation.x = Math.PI/2;
 
-		that._SCENE.add( that.landscape.model );
+		that.landscape.initVertices = new Float32Array(that.landscape.model.geometry.attributes.position.array);
 
+		that._SCENE.add( that.landscape.model );
+	}
+
+	this.removeLandscape = function(){
+		that._SCENE.remove( that.landscape.model );
+	}
+
+	function init(){
+
+		that.createLandscape();
 		that.animate();
 		that.bindEventListeneres();
 
@@ -311,36 +283,27 @@ function WebGL (){
 	this.update = function(){
 		counter++;
 
-		if ( !that.isChanging ){
-			this.updateTorus();
-			// this.updateLandscape();
-		}
-
 		if ( that.landscape.animate ){
+			that.updateLandscape();
+		};
 
-			var now = performance.now(),
-				dt = now - elapsedTime;
-
-			if ( dt > 2000 ){
-				elapsedTime = now;
-				// this.updateLandscapeDots();
-			};
-
-		}
+		if ( that.torus.animate ){
+			that.updateTorus();
+		};
 
 	};
 
 	this.animate = function(){
-		stats.begin();
+		stats.begin(); // Remove this when in production
 		that.update();
 		that.render();
-		stats.end();
+		stats.end(); // Remove this when in production
 		requestAnimationFrame( that.animate );		
 	};
 	this.bindEventListeneres = function(){
 		window.addEventListener("resize", that.Utils.onWindowResize, false);
 	};
-	
+
 	return this;
 
 };
