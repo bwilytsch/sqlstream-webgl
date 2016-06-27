@@ -6,6 +6,10 @@ function WebGL (){
 	var dotsArray = [];
 	var stats;
 
+	var gui = new dat.GUI();
+
+	this.torusCreated = false;
+
 	this.defaultParams = {
 		width: window.innerWidth,
 		height: window.innerHeight,
@@ -32,9 +36,11 @@ function WebGL (){
 		landscape: {
 			model: {},
 			initVertices: [],
-			dots: [],
-			dotsAmount: 320,
-			animate: false
+			animate: true,
+			width: 6,
+			height: 3,
+			widthSegments: 96,
+			heightSegments: 96
 		},
 		renderer: {
 			alpha: true,
@@ -84,14 +90,34 @@ function WebGL (){
 		that.torus.thickness = options.torus.thickness;
 		that.torus.radialSegments = options.torus.radialSegments;
 		that.torus.tubularSegments = options.torus.tubularSegments;
-		that.torus.tubularSegments = options.torus.tubularSegments;
 
 		// Config Landscape
 		that.landscape = that.defaultParams.landscape;
-		that.landscape.dotsAmount = options.landscape.dotsAmount;
 		that.landscape.animate = options.landscape.animate;
 
+		// DAT GUI Hooks
+		var generalFolder = gui.addFolder("Shared Options");
+		generalFolder.open();
+		generalFolder.addColor(that.torus, "color").onChange(updateView);
+		generalFolder.addColor(that.torus, "color1").onChange(updateView);
+		generalFolder.addColor(that.torus, "color2").onChange(updateView);
+		generalFolder.add(that.torus, "frequency", 1, 1000).onFinishChange(updateView);
+		generalFolder.add(that.torus, "amplifier", 0.1, 16).onFinishChange(updateView);
 
+		var landscapeFolder = gui.addFolder("Landscape");
+		landscapeFolder.open();
+
+		landscapeFolder.add( that.landscape, "width", 1, 24).onFinishChange(updateView);
+		landscapeFolder.add( that.landscape, "height", 1, 24).onFinishChange(updateView);
+		landscapeFolder.add( that.landscape, "widthSegments", 16, 256).onFinishChange(updateView);
+		landscapeFolder.add( that.landscape, "heightSegments", 16, 256).onFinishChange(updateView);
+
+
+		var torusFolder = gui.addFolder("Torus");
+		torusFolder.add( that.torus, "radius", 0.1, 2).onFinishChange(updateView);
+		torusFolder.add( that.torus, "thickness", 0.01, 1).onFinishChange(updateView);
+		torusFolder.add( that.torus, "radialSegments", 1, 256).onFinishChange(updateView);
+		torusFolder.add( that.torus, "tubularSegments", 1, 256).onFinishChange(updateView);
 
 		// Remove this when in production
 		stats = new Stats();
@@ -171,7 +197,7 @@ function WebGL (){
 		
 	};
 
-	that.updateLandscape = function(){
+	this.updateLandscape = function(){
 
 		var speedL = counter/that.torus.frequency*0.6;
 		var vertex, vertex2, vertex3, value;
@@ -248,10 +274,7 @@ function WebGL (){
 		// Create Torus
 		console.log("landscape created");
 
-		var height = 0.06,
-			amount = 64;
-
-		var geometry = new THREE.PlaneBufferGeometry(6,2, amount, amount);
+		var geometry = new THREE.PlaneBufferGeometry(that.landscape.width,that.landscape.height, that.landscape.widthSegments, that.landscape.heightSegments);
 
 		var position = geometry.attributes.position;
 		for ( var i = 0, lenT = position.count; i < lenT; i++){
@@ -287,6 +310,16 @@ function WebGL (){
 	this.removeLandscape = function(){
 		that._SCENE.remove( that.landscape.model );
 	}
+
+	function updateView(){
+		if ( that.torusCreated ){
+			that.removeTorus();
+			that.createTorus();
+		} else {
+			that.removeLandscape();
+			that.createLandscape();
+		};
+	};
 
 	function init(){
 

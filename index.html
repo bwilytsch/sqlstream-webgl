@@ -30,12 +30,19 @@
 			z-index: 0;
 		}
 
+		button {
+			position: fixed;
+			bottom: 64px;
+			left: 64px;
+		}
+
 	</style>
 
 </head>
 <body>
 
 <div id="webgl-container"></div>
+<button onclick="toggleObjects()">Toggle 3D Object</button>
 
 <!-- Testing -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
@@ -44,6 +51,7 @@
 <script src="./vendor/three.min.js"></script>
 <script src="./vendor/tweenlite.min.js"></script>
 <script src="./vendor/perlin.js"></script>
+<script src="./vendor/dat.gui.min.js"></script>
 <script src="./webgl-sqlstream.js"></script>
 
 <script>
@@ -76,7 +84,11 @@
 			animate: false // activate/deactivate animation
 		},
 		landscape: {
-			animate: true // activate/deactivate animation
+			animate: true, // activate/deactivate animation
+			width: 6,
+			height: 3,
+			widthSegments: 96,
+			heightSegments: 96
 		},
 		renderer: {
 			alpha: true, // false is a black background
@@ -84,18 +96,16 @@
 		}
 	});
 
-	var torusCreated = false;
-
 	// Animate Torus Later
-	window.addEventListener("click", function(){
-		if ( !torusCreated ){
-			torusCreated = true;
+	function toggleObjects(){
+		if ( !webgl.torusCreated ){
+			webgl.torusCreated = true;
 			webgl.removeLandscape();
 			webgl.createTorus();
 			webgl.landscape.animate = false;
 			webgl.torus.animate = true;
 		}
-	}, false)
+	}
 	
 
 </script>
